@@ -24,7 +24,7 @@ resource "aws_instance" "bastion" {
   instance_type = var.bastion_instance_type
   key_name      = var.ssh_key_name
   subnet_id     = var.subnet_id_1
-
+  iam_instance_profile = aws_iam_instance_profile.ssm-profile.name
   tags = {
     Name = var.bastion_name
   }
@@ -169,11 +169,3 @@ resource "aws_ssm_document" "ssm-access" {
 DOC
 }
 
-resource "aws_ssm_association" "ssm-associate" {
-  name = aws_ssm_document.ssm-access.name
-
-  targets {
-    key    = "InstanceIds"
-    values = [aws_instance.bastion.id]
-  }
-}
