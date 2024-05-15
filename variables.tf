@@ -1,21 +1,22 @@
 variable "subnet_id_1" {
   type    = string
-  default = "subnet-0eb1ecc0f95f88425"
+  default = null
 }
 
 variable "subnet_id_2" {
   type    = string
-  default = "subnet-08da88830e6a5822c"
+  default = null
 }
 
 variable "bastion_instance_type" {
   type    = string
-  default = "t2.micro"
+  default = null
 }
+
 
 variable "ssh_key_name" {
   type    = string
-  default = "Kubernetes"
+  default = null
 }
 
 variable "vpc_id" {
@@ -30,5 +31,20 @@ variable "cidr_block" {
 
 variable "bastion_name" {
   type    = string
+  default = null
+}
+
+variable "cluster_name" {
+  type    = string
+  default = "Test"
+}
+
+variable "node_group_name" {
+  type    = string
+  default = null
+}
+
+variable "node_group_instance_type" {
+  type    = list
   default = null
 }
