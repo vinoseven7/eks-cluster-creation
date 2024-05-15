@@ -2,7 +2,7 @@
 
 ```hcl
 module "eks-creation" {
-  source = "git@github.com:rajesh180793/vpc-creation.git?ref=feature/eks-modules"
+  source = "git@github.com:rajesh180793/eks-cluster-creation.git?ref=feature/eks-modules"
   subnet_id_1 = "subnet-0141198e30284b652"
   subnet_id_2 = "subnet-0e634871598ca60ab"
   bastion_instance_type = "t2.micro"
