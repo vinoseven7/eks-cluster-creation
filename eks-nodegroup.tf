@@ -1,10 +1,10 @@
 resource "aws_eks_node_group" "worker-node-group" {
   cluster_name    = aws_eks_cluster.Learning-eks.name
-  node_group_name = "Learning-workernodes"
+  node_group_name = var.node_group_name
   node_role_arn   = aws_iam_role.workernodes.arn
   subnet_ids      = [var.subnet_id_1, var.subnet_id_2]
-  instance_types  = ["t3.xlarge"]
-
+  #instance_types  = ["t3.xlarge"]
+  instance_types  = var.node_group_instance_type
   scaling_config {
     desired_size = 1
     max_size     = 1
