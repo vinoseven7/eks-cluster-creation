@@ -10,5 +10,6 @@ module "eks-creation" {
   vpc_id = "vpc-00b49215616b433a0"
   cidr_block = "10.0.0.0/16"
   bastion_name = "EKS-Bastion"
+  cluster_name = "Learning-eks"
 }
 ```
