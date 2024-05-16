@@ -1,107 +1,69 @@
-resource "aws_iam_policy" "ssm-access-ec2" {
-  name        = "SSM-Access-Policy"
-  description = "Provides permission to access SSM"
-  policy = jsonencode({
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "ssm:DescribeAssociation",
-                "ssm:GetDeployablePatchSnapshotForInstance",
-                "ssm:GetDocument",
-                "ssm:DescribeDocument",
-                "ssm:GetManifest",
-                "ssm:GetParameter",
-                "ssm:GetParameters",
-                "ssm:ListAssociations",
-                "ssm:ListInstanceAssociations",
-                "ssm:PutInventory",
-                "ssm:PutComplianceItems",
-                "ssm:PutConfigurePackageResult",
-                "ssm:UpdateAssociationStatus",
-                "ssm:UpdateInstanceAssociationStatus",
-                "ssm:UpdateInstanceInformation"
-            ],
-            "Resource": "*"
-        },
-        {
-            "Effect": "Allow",
-            "Action": [
-                "ssmmessages:CreateControlChannel",
-                "ssmmessages:CreateDataChannel",
-                "ssmmessages:OpenControlChannel",
-                "ssmmessages:OpenDataChannel"
-            ],
-            "Resource": "*"
-        },
-        {
-            "Effect": "Allow",
-            "Action": [
-                "ec2messages:AcknowledgeMessage",
-                "ec2messages:DeleteMessage",
-                "ec2messages:FailMessage",
-                "ec2messages:GetEndpoint",
-                "ec2messages:GetMessages",
-                "ec2messages:SendReply"
-            ],
-            "Resource": "*"
-        },
-        {
-            "Effect": "Allow",
-            "Action": "ssm:DescribeEffectivePatchesForPatchBaseline",
-            "Resource": "arn:aws:ssm:*:*:patchbaseline/*"
-        },
-        {
-            "Effect": "Allow",
-            "Action": "ssm:GetPatchBaseline",
-            "Resource": "arn:aws:ssm:*:*:patchbaseline/*"
-        },
-        {
-            "Effect": "Allow",
-            "Action": "tag:GetResources",
-            "Resource": "*"
-        },
-        {
-            "Effect": "Allow",
-            "Action": "ssm:DescribePatchBaselines",
-            "Resource": "*"
-        }
-    ]
+#Set up the first resource for the IAM role. This ensures that the role has access to EKS
+resource "aws_iam_role" "eks-iam-role" {
+  name = "Learning-eks-iam-role"
+
+  path = "/"
+
+  assume_role_policy = <<EOF
+{
+ "Version": "2012-10-17",
+ "Statement": [
+  {
+   "Effect": "Allow",
+   "Principal": {
+    "Service": "eks.amazonaws.com"
+   },
+   "Action": "sts:AssumeRole"
   }
-  )
+ ]
+}
+EOF
+
 }
 
+#Attach the policies to above role
+resource "aws_iam_role_policy_attachment" "AmazonEKSClusterPolicy" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
+  role       = aws_iam_role.eks-iam-role.name
+}
+resource "aws_iam_role_policy_attachment" "AmazonEC2ContainerRegistryReadOnly-EKS" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+  role       = aws_iam_role.eks-iam-role.name
+}
 
-#Create an IAM Role
+#IAM role for the worker nodes
 
-resource "aws_iam_role" "ssm-role" {
-  name = "ec2_role"
+resource "aws_iam_role" "workernodes" {
+  name = "eks-node-group-example"
 
   assume_role_policy = jsonencode({
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = {
+        Service = "ec2.amazonaws.com"
+      }
+    }]
     Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Sid    = "RoleForEC2"
-        Principal = {
-          Service = "ec2.amazonaws.com"
-        }
-      },
-    ]
   })
 }
 
-#Attach the policy to role
-resource "aws_iam_policy_attachment" "ssm-attach" {
-  name       = "ssm-attachment"
-  roles      = [aws_iam_role.ssm-role.name]
-  policy_arn = aws_iam_policy.ssm-access-ec2.arn
+resource "aws_iam_role_policy_attachment" "AmazonEKSWorkerNodePolicy" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+  role       = aws_iam_role.workernodes.name
 }
 
-#Create an instance profile using the role
-resource "aws_iam_instance_profile" "ssm-profile" {
-  name = "ssm"
-  role = aws_iam_role.ssm-role.name
+resource "aws_iam_role_policy_attachment" "AmazonEKS_CNI_Policy" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
+  role       = aws_iam_role.workernodes.name
+}
+
+resource "aws_iam_role_policy_attachment" "EC2InstanceProfileForImageBuilderECRContainerBuilds" {
+  policy_arn = "arn:aws:iam::aws:policy/EC2InstanceProfileForImageBuilderECRContainerBuilds"
+  role       = aws_iam_role.workernodes.name
+}
+
+resource "aws_iam_role_policy_attachment" "AmazonEC2ContainerRegistryReadOnly" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+  role       = aws_iam_role.workernodes.name
 }
